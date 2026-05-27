@@ -9,69 +9,51 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
 
-    - name: Install dependencies
+    - name: Install system dependencies
       run: |
-        pip install buildozer cython
         sudo apt-get update
         sudo apt-get install -y \
-          python3-pip \
-          build-essential \
-          git \
-          ffmpeg \
-          libsdl2-dev \
-          libsdl2-image-dev \
-          libsdl2-mixer-dev \
-          libsdl2-ttf-dev \
-          libportmidi-dev \
-          libswscale-dev \
-          libavformat-dev \
-          libavcodec-dev \
-          zlib1g-dev \
-          libgstreamer1.0 \
-          gstreamer1.0-plugins-base \
-          gstreamer1.0-plugins-good \
-          openjdk-17-jdk \
-          unzip \
-          autoconf \
-          libtool \
-          pkg-config \
-          cmake
+          build-essential git zip unzip \
+          openjdk-17-jdk zlib1g-dev \
+          libffi-dev libssl-dev
 
-    - name: Set up Android SDK
-      uses: android-actions/setup-android@v3
+    - name: Install buildozer
+      run: |
+        pip install buildozer cython
 
     - name: Create buildozer.spec
       run: |
-        cat > buildozer.spec << 'EOF'
-        [app]
-        title = VidGrab
-        package.name = vidgrab
-        package.domain = com.vidgrab
-        source.dir = .
-        source.include_exts = py
-        version = 1.0
-        requirements = python3,flask,yt-dlp
-        orientation = portrait
-        fullscreen = 0
-        android.permissions = INTERNET,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
-        android.api = 33
-        android.minapi = 24
-        android.ndk = 25b
-        android.archs = arm64-v8a
-        [buildozer]
-        log_level = 2
-        EOF
+        cat > buildozer.spec << 'SPEC'
+[app]
+title = VidGrab
+package.name = vidgrab
+package.domain = com.vidgrab
+source.dir = .
+source.include_exts = py
+version = 1.0
+requirements = python3,flask,yt-dlp
+orientation = portrait
+fullscreen = 0
+android.permissions = INTERNET,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
+android.api = 33
+android.minapi = 24
+android.ndk = 25b
+android.archs = arm64-v8a
+
+[buildozer]
+log_level = 2
+SPEC
 
     - name: Build APK
       run: |
-        buildozer android debug
+        buildozer android debug 2>&1 | tail -50
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
